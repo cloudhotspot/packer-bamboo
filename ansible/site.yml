@@ -1,0 +1,9 @@
+---
+- hosts: all
+  sudo: true
+  vars:
+    - docker_users:
+        - bamboo
+  roles:
+    - ubuntu-common
+    - docker

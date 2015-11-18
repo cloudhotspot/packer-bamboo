@@ -1,0 +1,68 @@
+{
+  "variables": {
+    "vm_disk_size": "81920",
+    "vm_iso_url": "http://releases.ubuntu.com/14.04/ubuntu-14.04.3-server-amd64.iso",
+    "vm_iso_checksum": "9e5fecc94b3925bededed0fdca1bd417",
+    "atlas_artifact_name": "cloudhotspot/ansible-tower",
+    "atlas_artifact_version": "14.04.3",
+    "aws_access_key": "{{env `AWS_ACCESS_KEY`}}",
+    "aws_secret_key": "{{env `AWS_SECRET_KEY`}}",
+    "aws_source_ami": "ami-8ee605bd",
+    "aws_region": "us-west-2",
+    "aws_instance_type": "t2.medium",
+    "aws_ssh_username": "ubuntu",
+    "aws_vpc_id":"vpc-db0696be",
+    "aws_subnet_id": "subnet-97452df2",
+    "aws_associate_public_ip_address": "true",
+    "aws_ami_name": "bamboo-agent {{timestamp}}"
+  },
+  "builders": [
+    {
+      "type": "amazon-ebs",
+      "access_key": "{{user `aws_access_key`}}",
+      "secret_key": "{{user `aws_secret_key`}}",
+      "region": "{{user `aws_region`}}",
+      "source_ami": "{{user `aws_source_ami`}}",
+      "instance_type": "{{user `aws_instance_type`}}",
+      "ssh_username": "{{user `aws_ssh_username`}}",
+      "ami_name": "{{user `aws_ami_name`}}",
+      "vpc_id": "{{user `aws_vpc_id`}}",
+      "subnet_id": "{{user `aws_subnet_id`}}",
+      "associate_public_ip_address": "{{user `aws_associate_public_ip_address`}}",
+       "ami_block_device_mappings": [
+        {
+          "device_name": "/dev/sda1",
+          "volume_size": 15,
+          "delete_on_termination": true
+        }
+      ],
+      "tags": {
+        "OS_Version": "Ubuntu",
+        "Release": "Latest",
+        "Application": "Bamboo Ubuntu Agent"
+      }
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "script": "packer/scripts/configure-swap.sh",
+      "only": ["amazon-ebs"]
+    },
+    {
+      "type": "shell",
+      "script": "packer/scripts/install-ansible.sh"
+    },
+    {
+        "type": "ansible-local",
+        "playbook_dir": "ansible",
+        "playbook_file": "ansible/site.yml"
+    }
+  ],
+  "post-processors": [
+    {
+      "type": "vagrant",
+      "keep_input_artifact": false
+    }
+  ]
+}
